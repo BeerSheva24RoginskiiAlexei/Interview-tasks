@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class InterviewTasks {
     /**
@@ -43,38 +44,40 @@ public class InterviewTasks {
             }
         return max;
     }
-public static List<DateRole> assignRoleDates(List<DateRole> rolesHistory, List<LocalDate> dates) {
-    List<DateRole> result = new ArrayList<>();
-    int roleIndex = 0;
-    for (LocalDate date : dates) {
-        while (roleIndex < rolesHistory.size() - 1 && rolesHistory.get(roleIndex + 1).date().isBefore(date)) {
-            roleIndex++;
+    public static List<DateRole> assignRoleDates(List<DateRole> rolesHistory, List<LocalDate> dates) {
+        TreeMap<LocalDate, String> roleMap = new TreeMap<>();
+
+        for (DateRole role : rolesHistory) {
+            roleMap.put(role.date(), role.role());
         }
-        String role = (rolesHistory.get(roleIndex).date().isBefore(date) || rolesHistory.get(roleIndex).date().isEqual(date))
-                ? rolesHistory.get(roleIndex).role()
-                : null;
-        result.add(new DateRole(date, role));
+
+        List<DateRole> result = new ArrayList<>();
+        for (LocalDate date : dates) {
+            LocalDate floorDate = roleMap.floorKey(date);
+            String role = (floorDate != null) ? roleMap.get(floorDate) : null;
+            result.add(new DateRole(date, role));
+        }
+
+        return result;
     }
-    return result;
-}
-public static boolean isAnagram(String word, String anagram) {
-    boolean isAnagram = true;
-    if (word.length() != anagram.length() || word == anagram) {
-        isAnagram = false;
-    } else {
+
+    public static boolean isAnagram(String word, String anagram) {
+        if (word.length() != anagram.length() || word.equals(anagram)) {
+            return false;
+        }
+
         Map<Character, Integer> charCount = new HashMap<>();
-        for (char c : word.toCharArray()) {
-            charCount.put(c, charCount.getOrDefault(c, 0) + 1);
-        }
+        
+        word.chars().forEach(c -> charCount.merge((char) c, 1, Integer::sum));
+        
         for (char c : anagram.toCharArray()) {
-            if (!charCount.containsKey(c) || charCount.get(c) == 0) {
-                isAnagram = false;
-                break;
+            charCount.merge(c, -1, Integer::sum);
+            if (charCount.get(c) < 0) { 
+                return false;
             }
-            charCount.put(c, charCount.get(c) - 1);
         }
+
+        return charCount.values().stream().allMatch(count -> count == 0);
     }
-    return isAnagram;
-}
     
 }
